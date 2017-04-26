@@ -30,11 +30,11 @@ function Chess(){
             for(var i = 0; i < 8; i++){
                 if(rows[i].length != 0){
                     for(var k = 0; k < 16;  k+=2){
-                        this.board[getChar(i) + ((k/2)+1)] = rows[i].substring(k, k+2);
+                        this.board[(getChar(k/2)) + (i+1)] = rows[i].substring(k, k+2);
                     }
                 }
             }
-        }
+        };
 
         /*
          * Moves piece based on move and stores move in history
@@ -70,7 +70,54 @@ function Chess(){
                 return false;
             }
 
+            //Check the rules for moving each type of piece
+            switch(move[0]){
+                case "P":
+                    //Check diagonal, forward, backward
+                    break;
+
+                case "Q":
+                    break;
+            
+                case "K":
+                    break;
+
+                case "N":
+                    break;
+                
+                case "R":
+                    break;
+                
+                case "B":
+                    break;
+                
+                default:
+                    return false;
+            }
+
             return true;
+        };
+
+        /*
+         * Forms a string of the current board and prints it to the console
+         */
+        Chess.prototype.printBoard = function(){
+            var boardStr = "";
+
+            var getChar = function(amount){
+                return String.fromCharCode('a'.charCodeAt(0) + amount);
+            };
+
+            for(var i = 8; i >= 1; i--){
+                boardStr += i + " |";
+                for(var j = 1; j <= 8; j++){
+                    boardStr += " " + (this.board[getChar(j-1) + i] + "  ").substring(0,2) + " |";
+                }
+                boardStr += "\n";
+            }
+            boardStr += "    a    b    c    d    e    f    g    h";
+            
+            console.log(boardStr);
         };
     }
 }
