@@ -1,7 +1,9 @@
 function Chess(){
     this.bPlayerAI;
     this.wPlayerAI;
+    this.currentPlayer = 'w';
     this.moveHistory = [];
+    this.initialPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // FEN starting position
 
     this.board = {
         a1:"", b1:"", c1:"", d1:"", e1:"", f1:"", g1:"", h1:"", 
@@ -17,23 +19,35 @@ function Chess(){
     if(typeof this.getPossibleMoves != "function"){
 
         /*
-         * Loads a game state for the board
-         *  gameState list piece locations in in each row divided by /
+         * Loads a game state for the board using the FEN format
          */
         Chess.prototype.loadGame = function(gameState){
-            var rows = gameState.split("/");
+            var fields = gameState.split(" ");
+            var rows = fields[0].split("/");
 
             var getChar = function(amount){
                 return String.fromCharCode('a'.charCodeAt(0) + amount);
             };
 
+            //Set piece positions
             for(var i = 0; i < 8; i++){
                 if(rows[i].length != 0){
-                    for(var k = 0; k < 16;  k+=2){
-                        this.board[(getChar(k/2)) + (i+1)] = rows[i].substring(k, k+2);
+                    for(var k = 0; k < 8;  k++){
+                        if(!isNaN(rows[i].charAt(k))){
+                            k = parseInt(rows[i].charAt(k)) - 1; // Skip the empty spaces
+                        }else{
+                            if(rows[i].charAt(k).toUpperCase() === rows[i].charAt(k)){ // White Piece
+                                this.board[getChar(k) + (8-i)] = "w" + rows[i].charAt(k);
+                            }else{
+                                this.board[getChar(k) + (8-i)] = "b" + rows[i].charAt(k).toUpperCase();
+                            }
+                        }
                     }
                 }
             }
+
+            //Set current player
+            this.currentPlayer = fields[1];
         };
 
         /*
@@ -65,15 +79,72 @@ function Chess(){
                 return false;
             }
 
-            //Checks if inputs exist on board
-            if(this.board[move[1]] === undefined || this.board[move[2]] === undefined){
+            //Checks if inputs exist on board and move[1] has a piece
+            if(this.board[move[1]] === undefined || this.board[move[2]] === undefined || this.board[move[1]] == ""){
                 return false;
             }
 
             //Check the rules for moving each type of piece
             switch(move[0]){
                 case "P":
-                    //Check diagonal, forward, backward
+                    console.log("Testing Pawn");
+
+                    if(move[1].charAt(0) != move[2].charAt(0)){ // Diagonal
+                        //Checks if move to is empty and that its the opponent's piece and its not a king
+                        if(this.board[move[2]] == "" || this.board[move[2]].charAt(0) == this.board[move[1]].charAt(0) || this.board[move[2]].charAt(1) == "K"){
+                            return false;
+                        }
+
+                        //Only move one step to left/right
+                        if(Math.abs(move[1].charCodeAt(0) - move[2].charCodeAt(0)) == 1){
+                            if(this.board[move[1]].charAt(0) == 'b'){
+                                console.log("Checking Black Pawn");
+                                if(move[1].charAt(1) - move[2].charAt(1) == 1){ //Check one step down
+                                    return true;
+                                }else{
+                                    return false; 
+                                }
+                                
+                            }else if(this.board[move[1]].charAt(0) == 'w'){
+                                console.log("Checking White Pawn");
+                                if(move[2].charAt(1) - move[1].charAt(1) == 1){ //Check one step up
+                                    return true;
+                                }else{
+                                    return false; 
+                                }
+                            }
+                        }else{
+                            console.log("test");
+                            return false;
+                        }
+
+                        
+                    }else if(move[1].charAt(1) > move[2].charAt(1) && this.board[move[1]].charAt(0) == 'b'){ // Forward
+                        console.log("Checking Black Pawn");
+                        //Check for 2 step move then one step
+                        if(move[1].charAt(1) == 7 && move[2].charAt(1) == 5 && this.board[move[2]] == ""){
+                            return true;
+                        }
+
+                        if(move[1].charAt(1) - move[2].charAt(1) == 1 && this.board[move[2]] == ""){
+                            return true;
+                        }else{
+                            return false; 
+                        }
+                    }else if(move[1].charAt(1) < move[2].charAt(1) && this.board[move[1]].charAt(0) == 'w'){ // Backward
+                        console.log("Checking White Pawn");
+                        if(move[1].charAt(1) == 2 && move[2].charAt(1) == 4 && this.board[move[2]] == ""){ // Check for double step at start
+                            return true;
+                        }
+
+                        if(move[2].charAt(1) - move[1].charAt(1) == 1 && this.board[move[2]] == ""){ //Check for one step up/down
+                            return true;
+                        }else{
+                            return false; 
+                        }
+                    }
+
+                    return false;
                     break;
 
                 case "Q":
@@ -94,8 +165,6 @@ function Chess(){
                 default:
                     return false;
             }
-
-            return true;
         };
 
         /*
@@ -118,6 +187,10 @@ function Chess(){
             boardStr += "    a    b    c    d    e    f    g    h";
             
             console.log(boardStr);
+        };
+
+        Chess.prototype.inCheck = function(){
+
         };
     }
 }
