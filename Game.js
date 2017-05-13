@@ -5,7 +5,7 @@ function Game (){
         Game.prototype.startGame = function(){
 			//Set up pieces
 			this.chess = new Chess();
-			this.chess.loadGame("wRwNwBwQwKwBwNwR/wPwPwPwPwPwPwPwPwP/////bPbPbPbPbPbPbPbP/bRbNbBbQbKbBbNbR");
+			this.chess.loadGame(this.chess.initialState);
 			this.drawBoard();	
 		 };
 
@@ -21,7 +21,7 @@ function Game (){
 			var move = m.split('-');
 			
 			//Check if move can be made on backend
-			if (move.length != 3 && this.chess.movePiece(move)){
+			if (move.length == 3 && this.chess.movePiece(move)){
 				//Move piece
 
 			}else{
