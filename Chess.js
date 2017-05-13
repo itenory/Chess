@@ -3,7 +3,8 @@ function Chess(){
     this.wPlayerAI;
     this.currentPlayer = 'w';
     this.moveHistory = [];
-    this.initialPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // FEN starting position
+    this.initialState = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // FEN starting position
+    this.currentState;
 
     this.board = {
         a1:"", b1:"", c1:"", d1:"", e1:"", f1:"", g1:"", h1:"", 
@@ -22,8 +23,10 @@ function Chess(){
          * Loads a game state for the board using the FEN format
          */
         Chess.prototype.loadGame = function(gameState){
+            this.currentState = gameState; //Initial the current state
             var fields = gameState.split(" ");
             var rows = fields[0].split("/");
+        
 
             var getChar = function(amount){
                 return String.fromCharCode('a'.charCodeAt(0) + amount);
@@ -51,7 +54,7 @@ function Chess(){
         };
 
         /*
-         * Moves piece based on move and stores move in history
+         * Moves piece based on move, stores the move in history, and changes the game state
          * move The move to be made
          * return Returns true if move was made, false otherwise.
          */
@@ -60,7 +63,9 @@ function Chess(){
                 this.board[move[2]] = this.board[move[1]];
                 this.board[move[1]] = "";
 
+                //Store in history and update the game state
                 this.moveHistory.push(move);
+
                 return true;
             }
 
@@ -73,14 +78,27 @@ function Chess(){
          * return Returns true if move can be made, false otherwise
          */
         Chess.prototype.isValidMove = function(move){
-            
             //Check for invalid format
             if(move.length != 3){
                 return false;
             }
 
-            //Checks if inputs exist on board and move[1] has a piece
-            if(this.board[move[1]] === undefined || this.board[move[2]] === undefined || this.board[move[1]] == ""){
+
+            /* Checks invalid moves, not piece specific:
+                Checks if inputs exist on board
+                move[1] has a piece
+                that new position isn't a king
+                from and to do not have the same player's piece
+                Moving piece is owned by current player
+            */
+            if(this.board[move[1]] === undefined || this.board[move[2]] === undefined || this.board[move[1]] == "" || this.board[move[2]].charAt(1) == 'K' || this.board[move[1]].charAt(0) == this.board[move[2]].charAt(0) || this.currentPlayer != this.board[move[1]].charAt(0)){
+                console.log("Invalid move, not piece specific");
+                console.log(this.board[move[1]] === undefined);
+                console.log(this.board[move[2]] === undefined );
+                console.log(this.board[move[1]] == "");
+                console.log(this.board[move[2]].charAt(1) != 'K');
+                console.log(this.board[move[1]].charAt(0) != this.board[move[2]].charAt(0));
+                console.log(this.currentPlayer != this.board[move[1]].charAt(0));
                 return false;
             }
 
@@ -143,29 +161,104 @@ function Chess(){
                             return false; 
                         }
                     }
+                    return false;  
+                
+                case "Q":
+                    console.log("Checking Queen");
+                    if(this.straightTest(move[1], move[2])){
+                        return true;
+                    }else if(this.diagonalTest(move[1], move[2])){
+                        return true;
+                    }
 
                     return false;
-                    break;
-
-                case "Q":
-                    break;
             
                 case "K":
-                    break;
+                    //Check for castling
+
+                    var x = move[1].charCodeAt(0);
+                    var y = move[1].charCodeAt(1);
+                    if(move[2].charCodeAt(0) < x-1 || move[2].charCodeAt(0) > x+1){
+                        return false; 
+                    }else if(move[2].charCodeAt(1) < y-1 || move[2].charCodeAt(1) > y+1){
+                        return false;
+                    }
+
+                    //Check for putting player in check
+                    
+                    return true;
 
                 case "N":
                     break;
                 
                 case "R":
-                    break;
+                    console.log("Checking Rook");
+                    if(this.straightTest(move[1], move[2])){
+                        return true;
+                    }
+                    return false;
                 
                 case "B":
-                    break;
+                    console.log("Checking Bishop");
+                    if(this.diagonalTest(move[1], move[2])){
+                        return true;
+                    }
+                    return false;
                 
                 default:
                     return false;
             }
         };
+
+        /*
+         * Checks for other pieces in a straight line, excluding position to
+         * from The starting position of the piece
+         * to The position the piece is to be moved to.
+         */
+        Chess.prototype.straightTest = function (from, to){          
+            if(from.charAt(0) == to.charAt(0) && from.charAt(1) != to.charAt(1)){ // Same col/letter
+                var dx = (to.charAt(1) - from.charAt(1)  > 0) ? 1 : -1;
+                for(var i = parseInt(from.charAt(1))+dx;  i != to.charAt(1); i+=dx){
+                    if(this.board[from.charAt(0) + i] != ""){
+                        return false;
+                    }
+                }
+                return true;
+            }else if(from.charAt(1) == to.charAt(1) && from.charAt(0) != to.charAt(0)){ // Same row/num
+                var dx = (to.charCodeAt(0) - from.charCodeAt(0) > 0) ? 1 : -1;
+                for(var i = from.charCodeAt(0)+dx; i != to.charCodeAt(0); i+=dx){
+                    if(this.board[String.fromCharCode(i) + from.charAt(1)] != ""){
+                        return false; 
+                    }
+                }
+                return true;
+
+            }else{
+                return false;
+            }
+        }
+   
+        /*
+         * Checks if their are any pieces on the path, Excluding the end point, to.
+         * from The starting position of the piece
+         * to The position the piece is to be moved to
+         */
+        Chess.prototype.diagonalTest = function(from, to){
+            if(Math.abs(to.charCodeAt(0) - from.charCodeAt(0)) != Math.abs(to.charCodeAt(1) - from.charCodeAt(1))){ // Check for uneven distances
+                return false; // Not a diagonal
+            }
+            
+            var dx = (to.charCodeAt(0) - from.charCodeAt(0)  > 0) ? 1 : -1;
+            var dy = (to.charAt(1) - from.charAt(1) > 0) ? 1 : -1;
+            var x = from.charCodeAt(0) + dx; // Next starting position on diagonal
+            var y = from.charCodeAt(1) + dy; 
+            console.log(dx,dy);
+            while( x != to.charCodeAt(0)){
+                if(this.board[String.fromCharCode(x) + String.fromCharCode(y)] != ""){ return false;}
+                x += 1; y += 1;    
+            }
+            return true;
+        }
 
         /*
          * Forms a string of the current board and prints it to the console
@@ -190,7 +283,6 @@ function Chess(){
         };
 
         Chess.prototype.inCheck = function(){
-
         };
     }
 }
