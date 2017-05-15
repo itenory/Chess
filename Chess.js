@@ -188,19 +188,28 @@ function Chess(){
                     
                     return true;
 
+                
+                
+                
                 case "N":
-                    break;
+                    if(Math.abs(move[1].charCodeAt(0) - move[2].charCodeAt(0)) == 2 && Math.abs(move[1].charCodeAt(1) - move[2].charCodeAt(1)) == 1){
+                        return true;
+                    }else if(Math.abs(move[1].charCodeAt(0) - move[2].charCodeAt(0)) == 1 && Math.abs(move[1].charCodeAt(1) - move[2].charCodeAt(1)) == 2){
+                        return true;
+                    }
+                    
+                    return false;
                 
                 case "R":
                     console.log("Checking Rook");
-                    if(this.straightTest(move[1], move[2])){
+                    if(this.straightTest(move[1], move[1])){
                         return true;
                     }
                     return false;
                 
                 case "B":
                     console.log("Checking Bishop");
-                    if(this.diagonalTest(move[1], move[2])){
+                    if(this.diagonalTest(move[1], move[1])){
                         return true;
                     }
                     return false;
