@@ -23,9 +23,8 @@ function Chess(){
          * Loads a game state for the board using the FEN format
          */
         Chess.prototype.loadGame = function(gameState){
-            this.currentState = gameState; //Initial the current state
-            var fields = gameState.split(" ");
-            var rows = fields[0].split("/");
+            this.currentState = gameState.split(" "); //Initial the current state
+            var rows = this.currentState[0].split("/");
         
 
             var getChar = function(amount){
@@ -60,8 +59,15 @@ function Chess(){
          */
         Chess.prototype.movePiece = function(move){
             if(this.isValidMove(move)){
-                this.board[move[2]] = this.board[move[1]];
-                this.board[move[1]] = "";
+                if(move[2].length == 3){ // For pawn promotion
+                    this.board[move[1]] = this.board[move[1]].charAt(0) + move[2].charAt(2);
+                    this.board[move[2].substring(0,2)] = this.board[move[1]];
+                    this.board[move[1]] = "";
+                }else{
+                    this.board[move[2]] = this.board[move[1]];
+                    this.board[move[1]] = "";
+                }
+
 
                 //Store in history and update the game state
                 this.moveHistory.push(move);
@@ -78,11 +84,22 @@ function Chess(){
          * return Returns true if move can be made, false otherwise
          */
         Chess.prototype.isValidMove = function(move){
-            //Check for invalid format
-            if(move.length != 3){
-                return false;
+            //Special case for castling
+            if(move.length == 1){
+                if(move[0] == "0-0"){
+                    if(this.currentPlayer == "w" && this.currentState[2].includes('K') && this.straightTest("a1", "d1")){
+                        return true;
+                    }else if(this.currentPlayer == "b" && this.currentState[2].includes('k') && this.straightTest("d1", "h1")){
+                        return true;
+                    }
+                }else if(move[0] == "0-0-0"){
+                    if(this.currentPlayer == "w" && this.currentState[2].includes('Q') && this.straightTest("a8", "d8")){
+                        return true;
+                    }else if(this.currentPlayer == "b" && this.currentState[2].includes('q') && this.straightTest("d8", "h8")){
+                        return true;
+                    }
+                }
             }
-
 
             /* Checks invalid moves, not piece specific:
                 Checks if inputs exist on board
@@ -174,10 +191,9 @@ function Chess(){
                     return false;
             
                 case "K":
-                    //Check for castling
-
                     var x = move[1].charCodeAt(0);
                     var y = move[1].charCodeAt(1);
+
                     if(move[2].charCodeAt(0) < x-1 || move[2].charCodeAt(0) > x+1){
                         return false; 
                     }else if(move[2].charCodeAt(1) < y-1 || move[2].charCodeAt(1) > y+1){
@@ -186,10 +202,7 @@ function Chess(){
 
                     //Check for putting player in check
                     
-                    return true;
-
-                
-                
+                    return true;      
                 
                 case "N":
                     if(Math.abs(move[1].charCodeAt(0) - move[2].charCodeAt(0)) == 2 && Math.abs(move[1].charCodeAt(1) - move[2].charCodeAt(1)) == 1){
