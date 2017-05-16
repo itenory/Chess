@@ -15,10 +15,10 @@ function Game (){
 
 		/*
 		 * Move the piece and capture if needed. Also change currentplayer
-		 * Move to be in format of: "P-b2-b3"
+		 * Move to be in format of: "P b2 b3"
 		 */
 		Game.prototype.makeMove = function(m){
-			var move = m.split('-');
+			var move = m.split(' ');
 			
 			//Check if move can be made on backend
 			if (move.length == 3 && this.chess.movePiece(move)){
