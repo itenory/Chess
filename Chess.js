@@ -1,12 +1,12 @@
+/*
+ * Class that handles the backend for Chess 
+ *  Loads/Saves games in the Forsyth-Edwards Notation (FEN)
+ */
 function Chess(){
-    this.bPlayerAI;
-    this.wPlayerAI;
     this.currentPlayer = 'w';
-    this.moveHistory = [];
+    this.currentState; // Current state of the game in FEN standard, stored as array of its components
     this.initialState = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // FEN starting position
-    this.currentState;
-
-    this.board = {
+    this.board = { // Game board object
         a1:"", b1:"", c1:"", d1:"", e1:"", f1:"", g1:"", h1:"", 
         a2:"", b2:"", c2:"", d2:"", e2:"", f2:"", g2:"", h2:"",
         a3:"", b3:"", c3:"", d3:"", e3:"", f3:"", g3:"", h3:"",
@@ -24,8 +24,7 @@ function Chess(){
          */
         Chess.prototype.loadGame = function(gameState){
             this.currentState = gameState.split(" "); //Initial the current state
-            var rows = this.currentState[0].split("/");
-        
+            var rows = this.currentState[0].split("/");        
 
             var getChar = function(amount){
                 return String.fromCharCode('a'.charCodeAt(0) + amount);
@@ -33,15 +32,16 @@ function Chess(){
 
             //Set piece positions
             for(var i = 0; i < 8; i++){
+                var dx = 0; // For skipping empty spaces 
                 if(rows[i].length != 0){
-                    for(var k = 0; k < 8;  k++){
+                    for(var k = 0; k+dx < 8; k++){
                         if(!isNaN(rows[i].charAt(k))){
-                            k = parseInt(rows[i].charAt(k)) - 1; // Skip the empty spaces
+                            dx += parseInt(rows[i].charAt(k)) - 1; // Skip the empty spaces
                         }else{
                             if(rows[i].charAt(k).toUpperCase() === rows[i].charAt(k)){ // White Piece
-                                this.board[getChar(k) + (8-i)] = "w" + rows[i].charAt(k);
+                                this.board[getChar(k+dx) + (8-i)] = "w" + rows[i].charAt(k);
                             }else{
-                                this.board[getChar(k) + (8-i)] = "b" + rows[i].charAt(k).toUpperCase();
+                                this.board[getChar(k+dx) + (8-i)] = "b" + rows[i].charAt(k).toUpperCase();
                             }
                         }
                     }
@@ -49,7 +49,7 @@ function Chess(){
             }
 
             //Set current player
-            this.currentPlayer = fields[1];
+            this.currentPlayer = this.currentState[1];
         };
 
         /*
@@ -63,14 +63,48 @@ function Chess(){
                     this.board[move[1]] = this.board[move[1]].charAt(0) + move[2].charAt(2);
                     this.board[move[2].substring(0,2)] = this.board[move[1]];
                     this.board[move[1]] = "";
+
+                }else if(move.length == 1){ // For castling, won't work for chess variants 
+                    if(move[0].length == 3){ // King side
+                        if(this.currentPlayer == "w"){
+                            this.board["h1"] = "";
+                            this.board["e1"] = "";
+                            this.board["g1"] = "wK";
+                            this.board["f1"] = "wR"; 
+                            
+                            this.currentState[2] = this.currentState[2].replace("K", "");
+                        }else{
+                            this.board["h8"] = "";
+                            this.board["e8"] = "";
+                            this.board["g8"] = "bK";
+                            this.board["f8"] = "bR"; 
+                        
+                            this.currentState[2] = this.currentState[2].replace("k", "");
+                        }
+
+                    }else{ // Queen side
+
+                        if(this.currentPlayer == "w"){
+                            this.board["a1"] = "";
+                            this.board["e1"] = "";
+                            this.board["c1"] = "wK";
+                            this.board["d1"] = "wR"; 
+                        
+                            this.currentState[2] = this.currentState[2].replace("Q", "");
+                        }else{
+                            this.board["a8"] = "";
+                            this.board["e8"] = "";
+                            this.board["c8"] = "bK";
+                            this.board["d8"] = "bR";
+
+                            this.currentState[2] = this.currentState[2].replace("q", "");
+                        }
+                    }
+
                 }else{
                     this.board[move[2]] = this.board[move[1]];
                     this.board[move[1]] = "";
                 }
-
-
-                //Store in history and update the game state
-                this.moveHistory.push(move);
 
                 return true;
             }
