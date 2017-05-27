@@ -5,7 +5,8 @@
 function Chess(){
     this.currentPlayer = 'w';
     this.currentState; // Current state of the game in FEN standard, stored as array of its components
-    this.initialState = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // FEN starting position
+    //this.initialState = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // FEN starting position
+    this.initialState = "r3k2r/p1p1p1p1/8/8/8/8/2PP2PP/R2QK2R w KQkq - 0 1";
     this.board = { // Game board object
         a1:"", b1:"", c1:"", d1:"", e1:"", f1:"", g1:"", h1:"", 
         a2:"", b2:"", c2:"", d2:"", e2:"", f2:"", g2:"", h2:"",
@@ -59,12 +60,7 @@ function Chess(){
          */
         Chess.prototype.movePiece = function(move){
             if(this.isValidMove(move)){
-                if(move[2].length == 3){ // For pawn promotion
-                    this.board[move[1]] = this.board[move[1]].charAt(0) + move[2].charAt(2);
-                    this.board[move[2].substring(0,2)] = this.board[move[1]];
-                    this.board[move[1]] = "";
-
-                }else if(move.length == 1){ // For castling, won't work for chess variants 
+                if(move.length == 1){ // For castling, won't work for chess variants 
                     if(move[0].length == 3){ // King side
                         if(this.currentPlayer == "w"){
                             this.board["h1"] = "";
@@ -101,14 +97,53 @@ function Chess(){
                         }
                     }
 
+                }else if(move[2].length == 3){ // For pawn promotion
+                    this.board[move[1]] = this.board[move[1]].charAt(0) + move[2].charAt(2);
+                    this.board[move[2].substring(0,2)] = this.board[move[1]];
+                    this.board[move[1]] = "";
+
                 }else{
                     this.board[move[2]] = this.board[move[1]];
                     this.board[move[1]] = "";
+
+                    //Check if king or rook move to stop castling
+                    if(move[0].charAt(0) == "K"){
+                        if(this.currentState[1] == "w"){
+                            this.currentState[2] = this.currentState[2].replace("K", "");
+                            this.currentState[2] = this.currentState[2].replace("Q", "");
+                        }else{
+                            this.currentState[2] = this.currentState[2].replace("k", "");
+                            this.currentState[2] = this.currentState[2].replace("q", "");
+                        }
+
+                        if(this.currentState[2].length == 0){
+                            this.currentState[2] = "-";
+                        }
+                    }else if(move[0].charAt(0) == "R"){
+                        if(this.currentState[1] == "w"){
+                            if(this.move[1].charAt(1) == "1"){
+                                this.currentState[2] = this.currentState[2].replace("Q");
+                            }else{
+                                this.currentState[2] = this.currentState[2].replace("K");
+                            }
+                        }else{
+                            if(this.move[1].charAt(1) == "1"){
+                                this.currentState[2] = this.currentState[2].replace("q");
+                            }else{
+                                this.currentState[2] = this.currentState[2].replace("k");
+                            }
+                        }
+
+                        if(this.currentState[2].length == 0){
+                            this.currentState[2] = "-";
+                        }
+                    }
                 }
 
+                this.currentPlayer = (this.currentState[1] == "w") ? "b" : "w";
+                this.currentState[1] = this.currentPlayer;
                 return true;
             }
-
             return false;
         };
 
@@ -120,18 +155,22 @@ function Chess(){
         Chess.prototype.isValidMove = function(move){
             //Special case for castling
             if(move.length == 1){
-                if(move[0] == "0-0"){
-                    if(this.currentPlayer == "w" && this.currentState[2].includes('K') && this.straightTest("a1", "d1")){
+                if(move[0] == "0-0"){ //King side
+                    if(this.currentPlayer == "w" && this.currentState[2].includes('K') && this.straightTest("e1", "h1")){
                         return true;
-                    }else if(this.currentPlayer == "b" && this.currentState[2].includes('k') && this.straightTest("d1", "h1")){
-                        return true;
-                    }
-                }else if(move[0] == "0-0-0"){
-                    if(this.currentPlayer == "w" && this.currentState[2].includes('Q') && this.straightTest("a8", "d8")){
-                        return true;
-                    }else if(this.currentPlayer == "b" && this.currentState[2].includes('q') && this.straightTest("d8", "h8")){
+                    }else if(this.currentPlayer == "b" && this.currentState[2].includes('k') && this.straightTest("e8", "h8")){
                         return true;
                     }
+                    return false;
+      
+                }else if(move[0] == "0-0-0"){ // Queen side
+                    if(this.currentPlayer == "w" && this.currentState[2].includes('Q') && this.straightTest("a1", "e1")){
+                        return true;
+                    }else if(this.currentPlayer == "b" && this.currentState[2].includes('q') && this.straightTest("a8", "d8")){
+                        return true;
+                    }
+
+                    return false;
                 }
             }
 
@@ -142,14 +181,16 @@ function Chess(){
                 from and to do not have the same player's piece
                 Moving piece is owned by current player
             */
-            if(this.board[move[1]] === undefined || this.board[move[2]] === undefined || this.board[move[1]] == "" || this.board[move[2]].charAt(1) == 'K' || this.board[move[1]].charAt(0) == this.board[move[2]].charAt(0) || this.currentPlayer != this.board[move[1]].charAt(0)){
-                console.log("Invalid move, not piece specific");
-                console.log(this.board[move[1]] === undefined);
-                console.log(this.board[move[2]] === undefined );
-                console.log(this.board[move[1]] == "");
-                console.log(this.board[move[2]].charAt(1) != 'K');
-                console.log(this.board[move[1]].charAt(0) != this.board[move[2]].charAt(0));
-                console.log(this.currentPlayer != this.board[move[1]].charAt(0));
+            if(this.board[move[1]] === undefined || this.board[move[2]] === undefined || this.board[move[1]] == "" || this.board[move[2]].charAt(1) == 'K' || this.board[move[1]].charAt(0) == this.board[move[2]].charAt(0) || this.currentPlayer != this.board[move[1]].charAt(0)){       
+                // //ONLY  FOR DEBUGGING, Can throw error 
+                // console.log("Invalid move, not piece specific");
+                // console.log(this.board[move[1]] === undefined);
+                // console.log(this.board[move[2]] === undefined );
+                // console.log(this.board[move[1]] == "");
+                // console.log(this.board[move[2]].charAt(1) != 'K');
+                // console.log(this.board[move[1]].charAt(0) != this.board[move[2]].charAt(0));
+                // console.log(this.currentPlayer != this.board[move[1]].charAt(0));
+                
                 return false;
             }
 
