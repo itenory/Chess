@@ -5,8 +5,7 @@
 function Chess(){
     this.currentPlayer = 'w';
     this.currentState; // Current state of the game in FEN standard, stored as array of its components
-    //this.initialState = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // FEN starting position
-    this.initialState = "r3k2r/p1p1p1p1/8/8/8/8/2PP2PP/R2QK2R w KQkq - 0 1";
+    this.initialState = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // FEN starting position
     this.board = { // Game board object
         a1:"", b1:"", c1:"", d1:"", e1:"", f1:"", g1:"", h1:"", 
         a2:"", b2:"", c2:"", d2:"", e2:"", f2:"", g2:"", h2:"",
